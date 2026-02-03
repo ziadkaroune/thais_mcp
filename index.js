@@ -14,10 +14,10 @@ import {
 const app = express();
 app.use(express.json());
 
-// to Store transports by session ID
+// store transports by session id
 const transports = {};
-
-
+// port server
+const PORT = 3000 || process.env.PORT;
 
 // Function to create a new MCP server instance
 function createMcpServer() {
@@ -117,24 +117,20 @@ function createMcpServer() {
             }
         }
 )
-
-   
-
     return server;
 }
 
-// Handle POST requests for client-to-server communication
+// Handle POST requests for client/server communication
 app.post('/mcp', async (req, res) => {
     try {
-        // Check for existing session ID
+        // session id check
         const sessionId = req.headers['mcp-session-id'];
         let transport;
 
         if (sessionId && transports[sessionId]) {
-            // Reuse existing transport
             transport = transports[sessionId];
         } else if (!sessionId && isInitializeRequest(req.body)) {
-            // New initialization request
+            // new initialization request
             const newSessionId = randomUUID();
             
             transport = new StreamableHTTPServerTransport({
@@ -145,7 +141,7 @@ app.post('/mcp', async (req, res) => {
             await server.connect(transport);
             
             transports[newSessionId] = transport;
-            console.log(`✅ Created new session: ${newSessionId}`);
+            console.log(`Created new session: ${newSessionId}`);
         } else {
             return res.status(400).json({
                 jsonrpc: '2.0',
@@ -175,7 +171,7 @@ app.post('/mcp', async (req, res) => {
     }
 });
 
-// Handle GET requests for SSE streaming
+// requests for SSE streaming
 app.get('/mcp', async (req, res) => {
     try {
         const sessionId = req.headers['mcp-session-id'];
@@ -209,21 +205,21 @@ app.get('/mcp', async (req, res) => {
     }
 });
 
-// Handle DELETE requests for session termination
+
 app.delete('/mcp', async (req, res) => {
     const sessionId = req.headers['mcp-session-id'];
     
     if (sessionId && transports[sessionId]) {
         delete transports[sessionId];
-        console.log(`🗑️  Terminated session: ${sessionId}`);
+        console.log(`Terminated session : ${sessionId}`);
     }
     
     res.status(200).send();
 });
 
-// Start server
-const PORT = 3000;
+
+ 
 app.listen(PORT, "127.0.0.1", () => {
-    console.log(`🚀 Hostel MCP is live at http://127.0.0.1:${PORT}/mcp`);
-    console.log(`📝 Ready to accept connections`);
+    console.log(`Hostel MCP is live at http://127.0.0.1:${PORT}/mcp`);
+    console.log(`Ready to accept connections`);
 });
