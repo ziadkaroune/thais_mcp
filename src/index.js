@@ -14,7 +14,7 @@ import {
 const app = express();
 app.use(express.json());
 
-// store transports by session id
+// store active transports keyed by session id
 const transports = {};
 // port server
 const PORT = 3000 || process.env.PORT;
@@ -25,23 +25,23 @@ function createMcpServer() {
         name: 'thais_mcp_server', 
         version: '1.0.0' 
     });
-
+ // tool: check room availability for a date range
     server.registerTool(
         'get_room_availability',
         {
             description: 'Check if rooms are available at the hostel for specific dates',
             inputSchema: z.object({
                 from: z.string()
-                    .regex(/^\d{4}-\d{2}-\d{2}$/)
+                    .regex(/^\d{4}-\d{2}-\d{2}$/)    // validate YYYY-MM-DD format
                     .describe("Check-in date in YYYY-MM-DD format (e.g , '2025-03-15')"),
                 to: z.string()
-                    .regex(/^\d{4}-\d{2}-\d{2}$/)
+                    .regex(/^\d{4}-\d{2}-\d{2}$/)    // validate YYYY-MM-DD format
                     .describe("Check-out date in YYYY-MM-DD format (e.g., '2025-03-25')")
             })
         },
         async ({ from, to }) => {
             try {
-                const token = await getTokens();
+                const token = await getTokens();                               // authenticate and get API token
                 const rooms_data = await thais_check_availability(from, to, token);
               
                 
@@ -86,7 +86,7 @@ function createMcpServer() {
             }
         }
     );
-
+ // tool: list all room types with their IDs and human-readable labels
     server.registerTool('thais_list_room_types' , {
             description: 'Lookup tool to convert room_type_ids into human-readable names (e.g., discovering that ID 5 is a "Deluxe Suite"). Call this if you see IDs but don\'t know the room names.',
     },
@@ -123,26 +123,31 @@ function createMcpServer() {
 // Handle POST requests for client/server communication
 app.post('/mcp', async (req, res) => {
     try {
-        // session id check
-        const sessionId = req.headers['mcp-session-id'];
+         // read session id from request header
+        const sessionId = req.headers['mcp-session-id']; 
         let transport;
 
         if (sessionId && transports[sessionId]) {
             transport = transports[sessionId];
         } else if (!sessionId && isInitializeRequest(req.body)) {
+
             // new initialization request
-            const newSessionId = randomUUID();
-            
+             // generate unique session id
+            const newSessionId = randomUUID(); 
+
+              // bind session id to transport
             transport = new StreamableHTTPServerTransport({
-                sessionIdGenerator: () => newSessionId
+                sessionIdGenerator: () => newSessionId     
             });
-            
+              // create fresh MCP server instance
             const server = createMcpServer();
+             // connect server to transport
             await server.connect(transport);
-            
+                // store transport for future requests
             transports[newSessionId] = transport;
             console.log(`Created new session: ${newSessionId}`);
         } else {
+            // reject requests with invalid or missing session
             return res.status(400).json({
                 jsonrpc: '2.0',
                 error: {
@@ -171,11 +176,13 @@ app.post('/mcp', async (req, res) => {
     }
 });
 
-// requests for SSE streaming
+// GET /mcp — SSE streaming endpoint for server-to-client push messages
 app.get('/mcp', async (req, res) => {
     try {
+         // read session id from header
         const sessionId = req.headers['mcp-session-id'];
         
+          // reject unknown sessions
         if (!sessionId || !transports[sessionId]) {
             return res.status(400).json({
                 jsonrpc: '2.0',
@@ -188,6 +195,7 @@ app.get('/mcp', async (req, res) => {
         }
 
         const transport = transports[sessionId];
+        // open SSE stream for this session
         await transport.handleRequest(req, res);
         
     } catch (error) {
@@ -205,11 +213,12 @@ app.get('/mcp', async (req, res) => {
     }
 });
 
-
+// DELETE /mcp — terminate and clean up an existing session
 app.delete('/mcp', async (req, res) => {
     const sessionId = req.headers['mcp-session-id'];
     
     if (sessionId && transports[sessionId]) {
+          // remove transport to free memory
         delete transports[sessionId];
         console.log(`Terminated session : ${sessionId}`);
     }
@@ -217,9 +226,9 @@ app.delete('/mcp', async (req, res) => {
     res.status(200).send();
 });
 
-
+// start HTTP server and bind to localhost only
  
 app.listen(PORT, "127.0.0.1", () => {
     console.log(`Hostel MCP is live at http://127.0.0.1:${PORT}/mcp`);
-    console.log(`Ready to accept connections`);
+    console.log(`Ready to accept connections `);
 });
