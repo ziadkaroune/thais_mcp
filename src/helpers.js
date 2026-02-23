@@ -25,7 +25,7 @@ export async function getTokens() {
 }
 
 
-
+// fetches room availability for a given date range using a valid token
 export   async function thais_check_availability(checkIn_date, checkOut_date, token) {
     const response = await fetch(`${BASE_URL}/hotel/apr/availabilities/currents?from=${checkIn_date}&to=${checkOut_date}`, {
         method: 'GET',
@@ -34,7 +34,6 @@ export   async function thais_check_availability(checkIn_date, checkOut_date, to
             'Authorization': `Bearer ${token}`
         }
     });
-    
     if (!response.ok) {
         throw new Error("Can't get room availability");
     }
@@ -42,6 +41,7 @@ export   async function thais_check_availability(checkIn_date, checkOut_date, to
     return await response.json();
 }
 
+// fetches all room types defined in the hotel (id + label pairs)
 export  async function thais_check_room_type(token) {
     const response = await fetch(`${BASE_URL}/hotel/room-types`, {
         method: 'GET',
