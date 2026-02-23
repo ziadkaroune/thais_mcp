@@ -158,7 +158,7 @@ app.post('/mcp', async (req, res) => {
             });
         }
 
-        // Handle the request through the transport
+        // Handle the request through the  transport
         await transport.handleRequest(req, res, req.body);
         
     } catch (error) {
@@ -227,7 +227,6 @@ app.delete('/mcp', async (req, res) => {
 });
 
 // start HTTP server and bind to localhost only
- 
 app.listen(PORT, "127.0.0.1", () => {
     console.log(`Hostel MCP is live at http://127.0.0.1:${PORT}/mcp`);
     console.log(`Ready to accept connections `);
