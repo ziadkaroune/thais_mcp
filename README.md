@@ -18,9 +18,14 @@ This server exposes booking-related tools to an MCP client (including Claude thr
 
 ## Project Structure
 
-- `index.js`: MCP server creation, tool registration, and HTTP endpoints
-- `helpers.js`: Thais API authentication + data-access helpers
-- `package.json`: dependencies and package metadata
+```
+src/
+├── index.js          # MCP server creation, tool registration, and HTTP endpoints
+├── helpers.js        # Thais API authentication + data-access helpers
+package.json          # dependencies and package metadata
+.env.example          # example environment variables template
+README.md             # this file
+```
 
 ## Requirements
 
@@ -46,7 +51,7 @@ PASSWORD=your_thais_password
 ## Run the Server
 
 ```bash
-node index.js
+node src/index.js
 ```
 
 Server URL:
@@ -59,7 +64,7 @@ http://127.0.0.1:3000/mcp
 
 ## Function Reference
 
-### `helpers.js`
+### `src/helpers.js`
 
 #### `getTokens()`
 
@@ -90,7 +95,7 @@ Fetches room type catalog (ID + label).
 - Returns: room type array
 - Throws: error if API call fails
 
-### `index.js`
+### `src/index.js`
 
 #### `createMcpServer()`
 
@@ -148,7 +153,7 @@ http://127.0.0.1:3000/mcp
 
 Then:
 
-1. start this server (`node index.js`)
+1. start this server (`node src/index.js`)
 2. add the MCP server URL in Claude
 3. verify Claude can discover tools:
 	 - `get_room_availability`
@@ -161,7 +166,7 @@ If your Claude app expects `stdio` MCP servers only, use an HTTP-to-stdio bridge
 1. Keep this server running:
 
 ```bash
-node index.js
+node src/index.js
 ```
 
 2. Edit Claude Desktop MCP config (example):
