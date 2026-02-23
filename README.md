@@ -1,4 +1,4 @@
-# Thais MCP Server
+# Thais MCP Server (StreamableHTTPServerTransport)
 
 Production-style Model Context Protocol (MCP) server for the Thais Hotel API.
 
